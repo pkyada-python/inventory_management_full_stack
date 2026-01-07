@@ -11,6 +11,7 @@ ROLE = ["user", "admin"]
 
 class Category(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
+    category_name_slug: Optional[str] = Field(None, min_length=3, max_length=50)
     description: Optional[str] = Field(None)
     created_at: datetime = Field(default=datetime.now(IST))
     updated_at: datetime = Field(default=datetime.now(IST))
@@ -18,15 +19,16 @@ class Category(BaseModel):
 
 class Product(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
+    product_name_slug: Optional[str] = Field(None, min_length=3, max_length=50)
     category: str = Field(..., description="Category Name or ID")
-    
+
     description: Optional[str] = Field(None)
     product_type: str = Field(..., enum=PRODUCT_TYPE)
     created_at: datetime = Field(default=datetime.now(IST))
     updated_at: datetime = Field(default=datetime.now(IST))
 
-
     #  package_size, packagingSize, targetCrops, Packaging Type, Minimum order quantity, Application, Form, Crop Type,Country Of Origin,Solubility,Benefits, Mode of Use, Major crops, Brand
+
 
 class User(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, unique=True)

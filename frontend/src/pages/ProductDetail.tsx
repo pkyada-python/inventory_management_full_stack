@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Leaf, Package, Droplets, FileText, Phone, Mail } from "lucide-react";
@@ -8,7 +9,82 @@ import { getProductById, getAllProducts } from "@/data/products";
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
-  const product = productId ? getProductById(productId) : undefined;
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const findProduct = async () => {
+      setIsLoading(true);
+      try {
+        // Try local data first
+        const localProduct = productId ? getProductById(productId) : undefined;
+
+        if (localProduct) {
+          setProduct(localProduct);
+          const related = getAllProducts()
+            .filter(p => p.categorySlug === localProduct.categorySlug && p.id !== localProduct.id)
+            .slice(0, 3);
+          setRelatedProducts(related);
+        } else if (productId) {
+          // Try backend
+          const response = await fetch(`/api/product/getproductbyid/${productId}`);
+          if (response.ok) {
+            const result = await response.json();
+            const p = result.data;
+            if (p) {
+              const mappedProduct = {
+                id: p._id,
+                name: p.name,
+                category: p.category_name || "Biologicals",
+                categorySlug: (p.category_name || "biologicals").toLowerCase().replace(/\s+/g, '-'),
+                description: p.description,
+                features: [],
+                applications: [],
+                image: "/placeholder.svg"
+              };
+              setProduct(mappedProduct);
+
+              // Try to fetch related from backend too
+              const relRes = await fetch(`/api/product/getallproduct`);
+              if (relRes.ok) {
+                const relData = await relRes.json();
+                const allBackProds = relData.data || [];
+                const relatedBack = allBackProds
+                  .filter((rp: any) => rp.category === p.category && rp._id !== p._id)
+                  .map((rp: any) => ({
+                    id: rp._id,
+                    name: rp.name,
+                    description: rp.description,
+                    image: "/placeholder.svg"
+                  }))
+                  .slice(0, 3);
+                setRelatedProducts(relatedBack);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error finding product:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    findProduct();
+  }, [productId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -31,15 +107,12 @@ const ProductDetail = () => {
     );
   }
 
-  // Get related products from the same category
-  const relatedProducts = getAllProducts()
-    .filter(p => p.categorySlug === product.categorySlug && p.id !== product.id)
-    .slice(0, 3);
+
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       {/* Breadcrumb */}
       <div className="pt-24 pb-4 bg-muted/30">
         <div className="container-wide mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,8 +140,8 @@ const ProductDetail = () => {
               className="relative"
             >
               <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl overflow-hidden border border-border/50">
-                <img 
-                  src={product.image} 
+                <img
+                  src={product.image}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -123,7 +196,7 @@ const ProductDetail = () => {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {product.applications.map((app, index) => (
-                    <span 
+                    <span
                       key={index}
                       className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
                     >
@@ -245,12 +318,12 @@ const ProductDetail = () => {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <Link 
+                  <Link
                     to={`/product/${relatedProduct.id}`}
                     className="block bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/30 transition-all duration-300 group"
                   >
                     <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
-                      <img 
+                      <img
                         src={relatedProduct.image}
                         alt={relatedProduct.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

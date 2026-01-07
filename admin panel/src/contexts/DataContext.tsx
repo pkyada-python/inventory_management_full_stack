@@ -6,7 +6,7 @@ interface DataContextType {
   products: Product[];
   users: User[];
   addCategory: (category: Omit<Category, 'id' | 'created_at'>) => Promise<boolean>;
-  updateCategory: (id: string, category: Omit<Category, 'id' | 'created_at'>) => Promise<boolean>;
+  updateCategory: (id: string, category: Omit<Category, 'id'>) => Promise<boolean>;
   deleteCategory: (id: string) => Promise<boolean>;
   addProduct: (product: Omit<Product, 'id' | 'created_at'>) => Promise<boolean>;
   updateProduct: (id: string, product: Omit<Product, 'id' | 'created_at'>) => Promise<boolean>;
@@ -37,7 +37,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         headers: {
           'Authorization': `Bearer ${token}`
         }
-      }); 
+      });
       if (response.ok) {
         const data = await response.json();
         let fetchedCategories: Category[] = [];
@@ -70,7 +70,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         headers: {
           'Authorization': `Bearer ${token}`
         }
-      }); 
+      });
       if (response.ok) {
         const data = await response.json();
         let fetchedProducts: Product[] = [];
@@ -124,14 +124,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateCategory = async (id: string, category: Omit<Category, 'id' | 'created_at'>) => {
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, ...category } : c));
-    return true;
+  const updateCategory = async (id: string, category: Omit<Category, 'id'>) => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`/api/category/updatecategory/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(category),
+      });
+
+      if (response.ok) {
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating category:', error);
+      return false;
+    }
   };
 
   const deleteCategory = async (id: string) => {
-    setCategories(prev => prev.filter(c => c.id !== id));
-    return true;
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`/api/category/deletecategory/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return false;
+    }
   };
 
   const addProduct = async (product: Omit<Product, 'id' | 'created_at'>) => {
