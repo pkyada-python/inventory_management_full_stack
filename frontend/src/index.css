@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Organic Agricultural Color Palette */
+    --background: 45 30% 97%;
+    --foreground: 150 30% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 30% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 30% 15%;
+
+    /* Deep forest green - primary brand color */
+    --primary: 145 45% 22%;
+    --primary-foreground: 45 30% 97%;
+
+    /* Golden amber - accent warmth */
+    --secondary: 42 85% 55%;
+    --secondary-foreground: 150 30% 15%;
+
+    /* Soft sage muted backgrounds */
+    --muted: 120 20% 92%;
+    --muted-foreground: 150 20% 40%;
+
+    /* Vibrant leaf green accent */
+    --accent: 120 50% 35%;
+    --accent-foreground: 45 30% 97%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 120 15% 85%;
+    --input: 120 15% 85%;
+    --ring: 145 45% 22%;
+
+    --radius: 0.75rem;
+
+    /* Custom colors */
+    --earth: 25 40% 35%;
+    --earth-light: 25 30% 50%;
+    --leaf: 120 60% 40%;
+    --leaf-dark: 140 50% 25%;
+    --gold: 42 90% 50%;
+    --gold-light: 45 80% 70%;
+    --cream: 45 40% 95%;
+    --cream-dark: 40 25% 88%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(145 45% 22% / 0.9), hsl(120 50% 35% / 0.85));
+    --gradient-gold: linear-gradient(135deg, hsl(42 90% 50%), hsl(45 80% 60%));
+    --gradient-nature: linear-gradient(180deg, hsl(120 20% 92%), hsl(45 30% 97%));
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px hsl(150 30% 15% / 0.06);
+    --shadow-md: 0 4px 16px hsl(150 30% 15% / 0.08);
+    --shadow-lg: 0 8px 32px hsl(150 30% 15% / 0.12);
+    --shadow-glow: 0 0 40px hsl(145 45% 22% / 0.2);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 150 25% 8%;
+    --foreground: 45 30% 95%;
+
+    --card: 150 25% 12%;
+    --card-foreground: 45 30% 95%;
+
+    --popover: 150 25% 12%;
+    --popover-foreground: 45 30% 95%;
+
+    --primary: 120 50% 45%;
+    --primary-foreground: 150 25% 8%;
+
+    --secondary: 42 70% 45%;
+    --secondary-foreground: 45 30% 95%;
+
+    --muted: 150 20% 18%;
+    --muted-foreground: 120 15% 65%;
+
+    --accent: 120 45% 40%;
+    --accent-foreground: 45 30% 95%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 150 20% 20%;
+    --input: 150 20% 20%;
+    --ring: 120 50% 45%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .section-padding {
+    @apply px-4 sm:px-6 lg:px-8 py-16 md:py-24;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-lg border border-border/50 shadow-lg;
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}

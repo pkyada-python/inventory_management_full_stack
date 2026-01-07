@@ -1,0 +1,10 @@
+uvicorn
+fastapi
+pydantic
+pymongo
+dotenv
+email-validator
+bcrypt
+jose
+python-jose
+
