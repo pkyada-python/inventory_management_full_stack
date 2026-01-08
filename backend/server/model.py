@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timezone, timedelta
 
@@ -20,7 +20,8 @@ class Category(BaseModel):
 class Product(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
     product_name_slug: Optional[str] = Field(None, min_length=3, max_length=50)
-    category: str = Field(..., description="Category Name or ID")
+    product_images: List[str] = Field(default_factory=list)
+    category: Optional[str] = Field(None, description="Category Name or ID")
 
     description: Optional[str] = Field(None)
     product_type: str = Field(..., enum=PRODUCT_TYPE)
@@ -51,8 +52,10 @@ class UserLogin(BaseModel):
 
 class inquiry(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    phone: str = Field(..., max_digits=10, min_length=10)
+    phone: str = Field(..., min_length=10)
     email: EmailStr = Field(..., unique=True)
+    product: str = Field(..., description="Product Name or ID")
+    quantity: str = Field(...)
     message: str = Field(...)
     created_at: datetime = Field(default=datetime.now(IST))
     updated_at: datetime = Field(default=datetime.now(IST))

@@ -2,12 +2,15 @@ from fastapi import FastAPI
 from server.view.category_view import CategoryView
 from server.view.product_view import ProductView
 from server.view.user_view import UserView
+from server.view.inquiry_view import InquiryView
+
 app = FastAPI()
 
 # Include the category router with a prefix and tag
 app.include_router(CategoryView.router, prefix="/category", tags=["Category"])
 app.include_router(ProductView.router, prefix="/product", tags=["Product"])
 app.include_router(UserView.router, prefix="/user", tags=["User"])
+app.include_router(InquiryView.router, prefix="/inquiry", tags=["Inquiry"])
 
 
 @app.get("/")

@@ -1,19 +1,21 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Category, User, Product } from '@/types/admin';
+import { Category, User, Product, Inquiry } from '@/types/admin';
 
 interface DataContextType {
   categories: Category[];
   products: Product[];
   users: User[];
+  inquiries: Inquiry[];
   addCategory: (category: Omit<Category, 'id' | 'created_at'>) => Promise<boolean>;
   updateCategory: (id: string, category: Omit<Category, 'id'>) => Promise<boolean>;
   deleteCategory: (id: string) => Promise<boolean>;
-  addProduct: (product: Omit<Product, 'id' | 'created_at'>) => Promise<boolean>;
+  addProduct: (product: FormData) => Promise<boolean>;
   updateProduct: (id: string, product: Omit<Product, 'id' | 'created_at'>) => Promise<boolean>;
   deleteProduct: (id: string) => Promise<boolean>;
   addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
   updateUser: (id: string, user: Omit<User, 'id' | 'createdAt'>) => void;
   deleteUser: (id: string) => void;
+  fetchInquiries: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>(initialUsers);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchCategories = async () => {
@@ -96,9 +99,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const fetchInquiries = async () => {
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch('/api/inquiry/getallinquiry', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const resData = await response.json();
+        const data = resData.data || [];
+
+        // Normalize ID
+        const normalizedInquiries = data.map((inq: any) => ({
+          ...inq,
+          id: inq.id || inq._id?.toString() || Math.random().toString()
+        }));
+
+        setInquiries(normalizedInquiries);
+      }
+    } catch (error) {
+      console.error('Failed to fetch inquiries:', error);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
     fetchProducts();
+    fetchInquiries();
   }, []);
 
   const addCategory = async (category: Omit<Category, 'id' | 'created_at'>) => {
@@ -168,16 +197,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id' | 'created_at'>) => {
+  const addProduct = async (product: FormData) => {
     const token = localStorage.getItem('authToken');
     try {
       const response = await fetch('/api/product/addproduct', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(product),
+        body: product,
       });
 
       if (response.ok) {
@@ -220,10 +248,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      categories, products, users,
+      categories, products, users, inquiries,
       addCategory, updateCategory, deleteCategory,
       addProduct, updateProduct, deleteProduct,
-      addUser, updateUser, deleteUser
+      addUser, updateUser, deleteUser,
+      fetchInquiries
     }}>
       {children}
     </DataContext.Provider>

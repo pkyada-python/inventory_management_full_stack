@@ -1,4 +1,4 @@
-import { LayoutDashboard, FolderTree, Users, LogOut, Package } from 'lucide-react';
+import { LayoutDashboard, FolderTree, Users, LogOut, Package, MessageSquare } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ const menuItems = [
   { title: 'Dashboard', url: '/admin', icon: LayoutDashboard },
   { title: 'Categories', url: '/admin/categories', icon: FolderTree },
   { title: 'Products', url: '/admin/products', icon: Package },
+  { title: 'Inquiries', url: '/admin/inquiries', icon: MessageSquare },
   { title: 'Users', url: '/admin/users', icon: Users },
 ];
 
@@ -26,7 +27,7 @@ export function AdminSidebar() {
         <h1 className="text-xl font-bold">Admin Panel</h1>
         <p className="text-sm text-muted-foreground">{user?.name}</p>
       </div>
-      
+
       <nav className="flex-1 p-4 space-y-1">
         {menuItems.map((item) => (
           <NavLink

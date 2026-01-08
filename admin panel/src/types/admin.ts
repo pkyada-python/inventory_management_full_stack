@@ -15,8 +15,11 @@ export interface Product {
   category_name?: string;
   description: string;
   product_type: ProductType;
+  product_images?: string[];
+  product_image?: string;
   created_at: string;
 }
+
 
 export interface User {
   id: string;
@@ -29,4 +32,15 @@ export interface User {
 export interface AdminUser {
   email: string;
   name: string;
+}
+
+export interface Inquiry {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  product: string;
+  quantity: string;
+  message: string;
+  created_at: string;
 }

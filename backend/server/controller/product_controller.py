@@ -1,3 +1,4 @@
+from typing import List
 from server.database import product_collection, category_collection
 from server.model import Product
 from bson import ObjectId, errors
@@ -6,7 +7,7 @@ from fastapi import HTTPException
 
 class ProductController:
     @staticmethod
-    async def create_product(product: Product):
+    async def create_product(product: Product, image_urls: List[str] = None):
         try:
             data = product.model_dump()
             if data:
@@ -45,6 +46,10 @@ class ProductController:
 
                 if not category_collection.find_one({"_id": category_id}):
                     raise HTTPException(status_code=400, detail="Category not found")
+
+                if image_urls:
+                    data["product_images"] = image_urls
+
                 result = product_collection.insert_one(data)
 
             return {
@@ -53,7 +58,9 @@ class ProductController:
                 "name": data["name"],
                 "product_name_slug": data["product_name_slug"],
                 "description": data["description"],
+                "product_images": data.get("product_images", []),
             }
+
         except HTTPException as he:
             raise he
         except Exception as e:
@@ -118,6 +125,40 @@ class ProductController:
                 "status_code": 200,
                 "message": "Products fetched successfully",
                 "data": data,
+            }
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @staticmethod
+    async def get_all_category__all_product():
+        try:
+            categories = list(category_collection.find())
+            result = []
+            for cat in categories:
+                cat_id_str = str(cat["_id"])
+                # Fetch all products belonging to this category
+                products = list(product_collection.find({"category": cat_id_str}))
+
+                # Format products for JSON serialization
+                formatted_products = []
+                for p in products:
+                    p["_id"] = str(p["_id"])
+                    formatted_products.append(p)
+
+                result.append(
+                    {
+                        "category_name": cat["name"],
+                        "category_id": cat_id_str,
+                        "category_description": cat.get("description", ""),
+                        "product_count": len(formatted_products),
+                        "products": formatted_products,
+                    }
+                )
+
+            return {
+                "status_code": 200,
+                "message": "Categories and products fetched successfully",
+                "data": result,
             }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

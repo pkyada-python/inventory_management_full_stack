@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ImagePlus, X } from 'lucide-react';
 import { Product, ProductType } from '@/types/admin';
 
 export default function Products() {
@@ -22,6 +22,7 @@ export default function Products() {
     product_type: 'Powder' as ProductType
   });
 
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,8 +36,25 @@ export default function Products() {
       if (editingProduct) {
         success = await updateProduct(editingProduct.id, formData);
       } else {
-        success = await addProduct(formData);
+        const data = new FormData();
+        data.append('name', formData.name);
+        data.append('category', formData.category);
+        data.append('description', formData.description);
+        data.append('product_type', formData.product_type);
+
+        if (selectedFiles.length === 0) {
+          setError('At least one image is required.');
+          setIsLoading(false);
+          return;
+        }
+
+        selectedFiles.forEach(file => {
+          data.append('files', file);
+        });
+
+        success = await addProduct(data);
       }
+
 
       if (success) {
         handleClose();
@@ -61,6 +79,13 @@ export default function Products() {
     setIsOpen(true);
   };
 
+  // const deleteProduct = async (id: string) => {
+  //   const success = await deleteProduct(id);
+  //   if (success) {
+  //     handleClose();
+  //   }
+  // };  
+
   const handleClose = () => {
     setIsOpen(false);
     setEditingProduct(null);
@@ -70,6 +95,7 @@ export default function Products() {
       description: '',
       product_type: 'Powder'
     });
+    setSelectedFiles([]);
     setError(null);
   };
 
@@ -121,8 +147,8 @@ export default function Products() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="product_type">Product Type</Label>
-                    <Select 
-                      value={formData.product_type} 
+                    <Select
+                      value={formData.product_type}
                       onValueChange={(v) => setFormData({ ...formData, product_type: v as ProductType })}
                       disabled={isLoading}
                     >
@@ -140,8 +166,8 @@ export default function Products() {
 
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
-                  <Select 
-                    value={formData.category || undefined} 
+                  <Select
+                    value={formData.category || undefined}
                     onValueChange={(v) => setFormData({ ...formData, category: v })}
                     disabled={isLoading || categories.length === 0}
                     required
@@ -171,6 +197,44 @@ export default function Products() {
                   />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="images">Product Images (At least one required)</Label>
+                  <div className="grid grid-cols-4 gap-2 mb-2">
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-md overflow-hidden bg-muted border">
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <label className="flex flex-col items-center justify-center aspect-square rounded-md border border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors">
+                      <ImagePlus className="h-6 w-6 text-primary mb-1" />
+                      <span className="text-[10px] font-medium text-primary">Add Image</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+
                 <div className="flex justify-end gap-2 pt-4">
                   <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
                     Cancel
@@ -188,6 +252,7 @@ export default function Products() {
           <Table>
             <TableHeader className="bg-muted/50">
               <TableRow>
+                <TableHead className="font-bold">Image</TableHead>
                 <TableHead className="font-bold">Name</TableHead>
                 <TableHead className="font-bold">Category</TableHead>
                 <TableHead className="font-bold">Type</TableHead>
@@ -206,6 +271,17 @@ export default function Products() {
               ) : (
                 products.map((product) => (
                   <TableRow key={product.id} className="hover:bg-muted/30 transition-colors">
+                    <TableCell>
+                      <div className="w-12 h-12 rounded bg-muted overflow-hidden border">
+                        {product.product_images && product.product_images.length > 0 ? (
+                          <img src={product.product_images[0]} alt={product.name} className="w-full h-full object-cover" />
+                        ) : product.product_image ? (
+                          <img src={product.product_image} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground">No img</div>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="font-semibold">{product.name}</TableCell>
                     <TableCell>
                       <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium">
@@ -213,11 +289,10 @@ export default function Products() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.product_type === 'Powder' ? 'bg-orange-100 text-orange-700' :
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.product_type === 'Powder' ? 'bg-orange-100 text-orange-700' :
                         product.product_type === 'Liquid' ? 'bg-blue-100 text-blue-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                          'bg-red-100 text-red-700'
+                        }`}>
                         {product.product_type}
                       </span>
                     </TableCell>

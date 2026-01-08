@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Leaf, Package, Droplets, FileText, Phone, Mail } from
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ProductInquiryModal } from "@/components/ProductInquiryModal";
 import { getProductById, getAllProducts } from "@/data/products";
 
 const ProductDetail = () => {
@@ -12,6 +13,7 @@ const ProductDetail = () => {
   const [product, setProduct] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
   useEffect(() => {
     const findProduct = async () => {
@@ -173,48 +175,55 @@ const ProductDetail = () => {
               </div>
 
               {/* Key Features */}
-              <div className="space-y-4">
-                <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Check className="w-5 h-5 text-primary" />
-                  Key Features
-                </h3>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {product.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3 text-muted-foreground">
-                      <div className="w-2 h-2 rounded-full bg-secondary shrink-0 mt-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {product.features && product.features.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
+                    <Check className="w-5 h-5 text-primary" />
+                    Key Features
+                  </h3>
+                  <ul className="grid sm:grid-cols-2 gap-3">
+                    {product.features.map((feature: string, index: number) => (
+                      <li key={index} className="flex items-start gap-3 text-muted-foreground">
+                        <div className="w-2 h-2 rounded-full bg-secondary shrink-0 mt-2" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Applications */}
-              <div className="space-y-4">
-                <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Leaf className="w-5 h-5 text-primary" />
-                  Applications
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.applications.map((app, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
-                    >
-                      {app}
-                    </span>
-                  ))}
+              {product.applications && product.applications.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
+                    <Leaf className="w-5 h-5 text-primary" />
+                    Applications
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.applications.map((app: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
+                      >
+                        {app}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <a href="/#contact">
-                  <Button variant="default" size="xl" className="w-full sm:w-auto">
-                    <Mail className="w-5 h-5 mr-2" />
-                    Send Inquiry
-                  </Button>
-                </a>
-                <a href="tel:08045802800">
+                <Button
+                  variant="default"
+                  size="xl"
+                  className="w-full sm:w-auto font-bold"
+                  onClick={() => setIsInquiryModalOpen(true)}
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Send Inquiry
+                </Button>
+                <a href="tel:08045802800" className="w-full sm:w-auto">
                   <Button variant="outline" size="xl" className="w-full sm:w-auto">
                     <Phone className="w-5 h-5 mr-2" />
                     Call Now
@@ -225,6 +234,13 @@ const ProductDetail = () => {
           </div>
         </div>
       </section>
+
+      <ProductInquiryModal
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
+        productName={product.name}
+        categoryName={product.category}
+      />
 
       {/* Product Details */}
       <section className="py-12 lg:py-16 bg-muted/30">
