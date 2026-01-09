@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, Field
 from datetime import timezone, timedelta
 
@@ -11,22 +11,33 @@ ROLE = ["user", "admin"]
 
 class Category(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
+    category_name_slug: Optional[str] = Field(None, min_length=3, max_length=50)
+    icon: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
-    created_at: datetime = Field(default=datetime.now(IST))
-    updated_at: datetime = Field(default=datetime.now(IST))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(IST))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(IST))
 
 
 class Product(BaseModel):
-    name: str = Field(..., min_length=3, max_length=50)
-    category: str = Field(..., description="Category Name or ID")
-    
-    description: Optional[str] = Field(None)
-    product_type: str = Field(..., enum=PRODUCT_TYPE)
-    created_at: datetime = Field(default=datetime.now(IST))
-    updated_at: datetime = Field(default=datetime.now(IST))
+    name: str = Field(..., min_length=3, max_length=100)
+    product_name_slug: Optional[str] = Field(None, min_length=3, max_length=100)
+    product_images: List[str] = Field(default_factory=list)
+    category: Optional[str] = Field(None, description="Category Name or ID")
+    category_slug: Optional[str] = Field(None)
 
+    description: Optional[str] = Field(None)
+    features: List[str] = Field(default_factory=list)
+    applications: List[str] = Field(default_factory=list)
+    dosage: Optional[str] = Field(None)
+    composition: Optional[str] = Field(None)
+    packing: List[str] = Field(default_factory=list)
+
+    product_type: Optional[str] = Field(None)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(IST))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(IST))
 
     #  package_size, packagingSize, targetCrops, Packaging Type, Minimum order quantity, Application, Form, Crop Type,Country Of Origin,Solubility,Benefits, Mode of Use, Major crops, Brand
+
 
 class User(BaseModel):
     username: str = Field(..., min_length=3, max_length=50, unique=True)
@@ -34,8 +45,8 @@ class User(BaseModel):
     role: str = Field(default="user", enum=ROLE)
     password: str = Field(..., min_length=8, max_length=50)
     confirm_password: str = Field(..., min_length=8, max_length=50)
-    created_at: datetime = Field(default=datetime.now(IST))
-    updated_at: datetime = Field(default=datetime.now(IST))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(IST))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(IST))
 
 
 class UpdateUserRole(BaseModel):
@@ -49,8 +60,10 @@ class UserLogin(BaseModel):
 
 class inquiry(BaseModel):
     name: str = Field(..., min_length=3, max_length=50)
-    phone: str = Field(..., max_digits=10, min_length=10)
+    phone: str = Field(..., min_length=10)
     email: EmailStr = Field(..., unique=True)
+    product: str = Field(..., description="Product Name or ID")
+    quantity: str = Field(...)
     message: str = Field(...)
-    created_at: datetime = Field(default=datetime.now(IST))
-    updated_at: datetime = Field(default=datetime.now(IST))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(IST))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(IST))

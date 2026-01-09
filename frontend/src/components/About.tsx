@@ -106,9 +106,6 @@ export const About = () => {
               </p>
             </div>
 
-            <Button variant="default" size="lg">
-              Learn More About Us
-            </Button>
           </motion.div>
         </div>
 

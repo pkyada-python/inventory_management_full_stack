@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ChevronDown, Leaf, FlaskConical, Bug, Sprout, Droplets, Shield } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowRight, Leaf, FlaskConical, Bug, Sprout, Droplets, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { productCategories } from "@/data/products";
 
 const iconMap: Record<string, React.ElementType> = {
   Sprout,
@@ -15,13 +14,33 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export const Products = () => {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const toggleCategory = (name: string) => {
-    setExpandedCategory(expandedCategory === name ? null : name);
-  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/product/get-all-category-all-product');
+
+        if (response.ok) {
+          const result = await response.json();
+          // The API now returns the data in the exact format we need
+          setCategories(result.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+
+  }, []);
 
   return (
+
     <section id="products" className="section-padding bg-background">
       <div className="container-wide mx-auto">
         {/* Section Header */}
@@ -45,108 +64,79 @@ export const Products = () => {
           </p>
         </motion.div>
 
-        {/* Products Grid - Accordion Style */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {productCategories.map((category, index) => {
-            const IconComponent = iconMap[category.icon] || Leaf;
-            return (
-              <motion.div
-                key={category.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
-                className="group"
-              >
-                <div
-                  className={`bg-card rounded-xl border transition-all duration-300 overflow-hidden ${
-                    expandedCategory === category.name
-                      ? "border-primary shadow-lifted"
-                      : "border-border/50 hover:border-primary/30 hover:shadow-soft"
-                  }`}
-                >
-                  {/* Category Header */}
-                  <button
-                    onClick={() => toggleCategory(category.name)}
-                    className="w-full flex items-center justify-between p-5 text-left"
+        {/* Category Grid */}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+            <p className="text-muted-foreground animate-pulse">Loading premium catalog...</p>
+          </div>
+        ) : categories.length > 0 ? (
+          <div className="space-y-12">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.slice(0, 6).map((category, index) => {
+                const IconComponent = iconMap[category.icon] || Leaf;
+                return (
+                  <motion.div
+                    key={category.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${
-                          expandedCategory === category.name
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-primary/10 text-primary"
-                        }`}
-                      >
-                        <IconComponent className="w-5 h-5" />
+                    <Link
+                      to={`/category/${category.slug}`}
+                      className="group relative block h-full bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/40 transition-all duration-500"
+                    >
+                      {/* Visual Decor */}
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
+                        <IconComponent className="w-32 h-32" />
                       </div>
-                      <div>
-                        <h3 className="font-serif text-lg font-semibold text-foreground">
-                          {category.name}
-                        </h3>
-                        <span className="text-xs text-muted-foreground">
-                          {category.products.length} products
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`w-5 h-5 text-muted-foreground transition-transform duration-300 ${
-                        expandedCategory === category.name ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
 
-                  {/* Products List */}
-                  <AnimatePresence>
-                    {expandedCategory === category.name && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-5 pb-5 pt-0">
-                          <div className="border-t border-border/50 pt-4">
-                            <ul className="space-y-2">
-                              {category.products.map((product) => (
-                                <li
-                                  key={product.id}
-                                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group/item"
-                                >
-                                  <div className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
-                                  <Link 
-                                    to={`/product/${product.id}`}
-                                    className="flex-1 hover:text-primary transition-colors"
-                                  >
-                                    {product.name}
-                                  </Link>
-                                  <Link
-                                    to={`/product/${product.id}`}
-                                    className="text-xs text-primary opacity-0 group-hover/item:opacity-100 transition-opacity"
-                                  >
-                                    View →
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                            <a
-                              href="#contact"
-                              className="inline-flex items-center gap-2 text-primary font-medium text-sm mt-4 hover:gap-3 transition-all"
-                            >
-                              Inquire About This Category
-                              <ArrowRight className="w-4 h-4" />
-                            </a>
+                      <div className="p-8 flex flex-col h-full">
+                        <div className="flex items-start justify-between mb-8">
+                          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 shadow-inner">
+                            <IconComponent className="w-8 h-8" />
                           </div>
+                          <span className="text-sm font-bold text-secondary bg-secondary/5 px-3 py-1 rounded-full border border-secondary/10">
+                            {category.products.length} Products
+                          </span>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+
+                        <div className="flex-1">
+                          <h3 className="font-serif text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
+                            {category.name}
+                          </h3>
+                        </div>
+
+                        <div className="inline-flex items-center gap-2 text-primary font-bold text-sm tracking-wide uppercase group-hover:gap-3 transition-all duration-300">
+                          View Category
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {categories.length > 6 && (
+              <div className="text-center">
+                <Link to="/categories">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 hover:bg-primary hover:text-white transition-all">
+                    View All Categories
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border/50">
+            <Leaf className="w-16 h-16 text-muted-foreground mx-auto mb-6 opacity-20" />
+            <p className="text-muted-foreground text-lg">No products found in our catalog yet.</p>
+          </div>
+        )}
+
 
         {/* Additional Products Note */}
         <motion.div

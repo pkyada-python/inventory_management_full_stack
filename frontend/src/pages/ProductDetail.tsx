@@ -1,14 +1,65 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, Leaf, Package, Droplets, FileText, Phone, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { ProductInquiryModal } from "@/components/ProductInquiryModal";
 import { getProductById, getAllProducts } from "@/data/products";
 
 const ProductDetail = () => {
   const { productId } = useParams<{ productId: string }>();
-  const product = productId ? getProductById(productId) : undefined;
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchProductData = async () => {
+      if (!productId) return;
+
+      setIsLoading(true);
+      try {
+        // Fetch current product details by slug
+        const response = await fetch(`/api/product/getproductbyslug/${productId}`);
+        if (response.ok) {
+          const result = await response.json();
+          const p = result.data;
+
+          if (p) {
+            setProduct(p);
+
+            // Now fetch related products (same category)
+            const relRes = await fetch(`/api/product/get-related-products/${productId}`);
+            if (relRes.ok) {
+              const relData = await relRes.json();
+              setRelatedProducts(relData.data || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching product details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProductData();
+    window.scrollTo(0, 0);
+  }, [productId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -31,15 +82,12 @@ const ProductDetail = () => {
     );
   }
 
-  // Get related products from the same category
-  const relatedProducts = getAllProducts()
-    .filter(p => p.categorySlug === product.categorySlug && p.id !== product.id)
-    .slice(0, 3);
+
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       {/* Breadcrumb */}
       <div className="pt-24 pb-4 bg-muted/30">
         <div className="container-wide mx-auto px-4 sm:px-6 lg:px-8">
@@ -67,8 +115,8 @@ const ProductDetail = () => {
               className="relative"
             >
               <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl overflow-hidden border border-border/50">
-                <img 
-                  src={product.image} 
+                <img
+                  src={product.image}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -100,48 +148,55 @@ const ProductDetail = () => {
               </div>
 
               {/* Key Features */}
-              <div className="space-y-4">
-                <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Check className="w-5 h-5 text-primary" />
-                  Key Features
-                </h3>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {product.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3 text-muted-foreground">
-                      <div className="w-2 h-2 rounded-full bg-secondary shrink-0 mt-2" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {product.features && product.features.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
+                    <Check className="w-5 h-5 text-primary" />
+                    Key Features
+                  </h3>
+                  <ul className="grid sm:grid-cols-2 gap-3">
+                    {product.features.map((feature: string, index: number) => (
+                      <li key={index} className="flex items-start gap-3 text-muted-foreground">
+                        <div className="w-2 h-2 rounded-full bg-secondary shrink-0 mt-2" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {/* Applications */}
-              <div className="space-y-4">
-                <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Leaf className="w-5 h-5 text-primary" />
-                  Applications
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {product.applications.map((app, index) => (
-                    <span 
-                      key={index}
-                      className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
-                    >
-                      {app}
-                    </span>
-                  ))}
+              {product.applications && product.applications.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-serif text-xl font-semibold text-foreground flex items-center gap-2">
+                    <Leaf className="w-5 h-5 text-primary" />
+                    Applications
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.applications.map((app: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1.5 bg-primary/10 text-primary text-sm font-medium rounded-full"
+                      >
+                        {app}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <a href="/#contact">
-                  <Button variant="default" size="xl" className="w-full sm:w-auto">
-                    <Mail className="w-5 h-5 mr-2" />
-                    Send Inquiry
-                  </Button>
-                </a>
-                <a href="tel:08045802800">
+                <Button
+                  variant="default"
+                  size="xl"
+                  className="w-full sm:w-auto font-bold"
+                  onClick={() => setIsInquiryModalOpen(true)}
+                >
+                  <Mail className="w-5 h-5 mr-2" />
+                  Send Inquiry
+                </Button>
+                <a href="tel:08045802800" className="w-full sm:w-auto">
                   <Button variant="outline" size="xl" className="w-full sm:w-auto">
                     <Phone className="w-5 h-5 mr-2" />
                     Call Now
@@ -152,6 +207,13 @@ const ProductDetail = () => {
           </div>
         </div>
       </section>
+
+      <ProductInquiryModal
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
+        productName={product.name}
+        categoryName={product.category}
+      />
 
       {/* Product Details */}
       <section className="py-12 lg:py-16 bg-muted/30">
@@ -245,12 +307,12 @@ const ProductDetail = () => {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                 >
-                  <Link 
+                  <Link
                     to={`/product/${relatedProduct.id}`}
                     className="block bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/30 transition-all duration-300 group"
                   >
                     <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
-                      <img 
+                      <img
                         src={relatedProduct.image}
                         alt={relatedProduct.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"

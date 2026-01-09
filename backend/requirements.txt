@@ -7,4 +7,7 @@ email-validator
 bcrypt
 jose
 python-jose
+cloudinary
+python-multipart
+requests
 

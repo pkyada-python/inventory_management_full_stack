@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, User } from 'lucide-react';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -19,7 +20,7 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    
+
     try {
       const result = await login(username, password);
       if (result.success) {
@@ -37,10 +38,10 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 p-4">
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
-      
+
       <Card className="w-full max-w-md shadow-2xl border-none bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl relative z-10 overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-cyan-500"></div>
-        
+
         <CardHeader className="text-center space-y-2 pt-8">
           <div className="mx-auto bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mb-2 animate-in zoom-in duration-500">
             <Lock className="w-8 h-8 text-primary" />
@@ -81,14 +82,26 @@ export default function Login() {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="pl-10 h-12 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary"
+                  className="pl-10 pr-10 h-12 bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 transition-all focus:ring-4 focus:ring-primary/10 focus:border-primary"
                   disabled={isLoading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors focus:outline-none"
+                  disabled={isLoading}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -99,8 +112,8 @@ export default function Login() {
               </div>
             )}
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-12 text-base font-bold transition-all hover:shadow-lg hover:shadow-primary/20 active:scale-[0.98] rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700"
               disabled={isLoading}
             >

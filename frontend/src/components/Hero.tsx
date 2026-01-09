@@ -33,7 +33,7 @@ export const Hero = () => {
       />
 
       {/* Content */}
-      <div className="relative z-10 container-wide mx-auto px-4 sm:px-6 lg:px-8 pt-20">
+      <div className="relative z-10 container-wide mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
         <div className="max-w-4xl mx-auto text-center">
           {/* Badge */}
           <motion.div
@@ -115,7 +115,7 @@ export const Hero = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 0.6 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors cursor-pointer"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-primary-foreground/60 hover:text-primary-foreground transition-colors cursor-pointer"
       >
         <span className="text-sm font-medium">Scroll to explore</span>
         <motion.div

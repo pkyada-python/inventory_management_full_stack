@@ -9,12 +9,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { Category } from '@/types/admin';
+import { toast } from 'sonner';
 
 export default function Categories() {
   const { categories, addCategory, updateCategory, deleteCategory } = useData();
   const [isOpen, setIsOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState({ name: '', description: '' });
+  const [formData, setFormData] = useState<Partial<Category>>({ name: '', category_name_slug: '', description: '' });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,21 +23,22 @@ export default function Categories() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
     setError(null);
 
     try {
       let success = false;
       if (editingCategory) {
-        // updateCategory is now async
-        success = await updateCategory(editingCategory.id, formData);
+        success = await updateCategory(editingCategory.id, formData as Omit<Category, 'id'>);
       } else {
-        success = await addCategory(formData);
+        success = await addCategory(formData as Omit<Category, 'id' | 'created_at'>);
       }
 
       if (success) {
+        toast.success(editingCategory ? 'Category updated' : 'Category created');
         setIsOpen(false);
         setEditingCategory(null);
-        setFormData({ name: '', description: '' });
+        setFormData({ name: '', category_name_slug: '', description: '' });
       } else {
         setError('Failed to save category. Please check your connection.');
       }
@@ -49,14 +51,25 @@ export default function Categories() {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({ name: category.name, description: category.description });
+    setFormData({ ...category });
     setIsOpen(true);
   };
 
   const handleClose = () => {
     setIsOpen(false);
     setEditingCategory(null);
-    setFormData({ name: '', description: '' });
+    setFormData({ name: '', category_name_slug: '', description: '' });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      const success = await deleteCategory(id);
+      if (success) {
+        toast.success('Category deleted successfully');
+      } else {
+        toast.error('Failed to delete category');
+      }
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -101,6 +114,15 @@ export default function Categories() {
                     required
                     disabled={isLoading}
                   />
+                </div><div className="space-y-2">
+                  <Label htmlFor="category-slug-name">Category Name Slug</Label>
+                  <Input
+                    id="category-slug-name"
+                    value={formData.category_name_slug}
+                    onChange={(e) => setFormData({ ...formData, category_name_slug: e.target.value })}
+                    required
+                    disabled={isLoading}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
@@ -129,6 +151,7 @@ export default function Categories() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Category Name Slug</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
@@ -138,6 +161,7 @@ export default function Categories() {
               {categories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell>{category.category_name_slug}</TableCell>
                   <TableCell>{category.description}</TableCell>
                   <TableCell className="whitespace-nowrap">{formatDate(category.created_at)}</TableCell>
                   <TableCell>
@@ -145,7 +169,7 @@ export default function Categories() {
                       <Button size="icon" variant="ghost" onClick={() => handleEdit(category)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteCategory(category.id)}>
+                      <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDelete(category.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

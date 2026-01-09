@@ -23,3 +23,31 @@ class CategoryView:
     @router.get("/getallcategory")
     async def get_all_category():
         return await CategoryController.get_all_category()
+
+    @staticmethod
+    @router.post("/deletecategory/{category_id}")
+    async def delete_category(
+        category_id: str, token: dict = Depends(AuthTokenVerify.verify_token)
+    ):
+        if token:
+            return await CategoryController.delete_category(category_id)
+        else:
+            raise HTTPException(
+                status_code=401, detail="Invalid authentication credentials"
+            )
+
+    @staticmethod
+    @router.post("/updatecategory/{category_id}")
+    async def update_category(
+        category_id: str,
+        category: Category,
+        token: dict = Depends(AuthTokenVerify.verify_token),
+    ):
+        if token:
+            return await CategoryController.update_category(category_id, category)
+        else:
+            raise HTTPException(
+                status_code=401, detail="Invalid authentication credentials"
+            )
+
+        return await CategoryController.update_category(category_id, category)
