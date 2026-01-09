@@ -53,7 +53,7 @@ export const Contact = () => {
                       Your Name
                     </label>
                     <Input
-                      placeholder="John Doe"
+                      placeholder="Enter your name"
                       className="bg-background border-border/50 focus:border-primary"
                     />
                   </div>
@@ -62,7 +62,7 @@ export const Contact = () => {
                       Phone Number
                     </label>
                     <Input
-                      placeholder="+91 9876543210"
+                      placeholder="Enter your phone number"
                       className="bg-background border-border/50 focus:border-primary"
                     />
                   </div>
@@ -73,7 +73,7 @@ export const Contact = () => {
                   </label>
                   <Input
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="Enter your email address"
                     className="bg-background border-border/50 focus:border-primary"
                   />
                 </div>

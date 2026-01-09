@@ -16,64 +16,37 @@ const ProductDetail = () => {
   const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
   useEffect(() => {
-    const findProduct = async () => {
+    const fetchProductData = async () => {
+      if (!productId) return;
+
       setIsLoading(true);
       try {
-        // Try local data first
-        const localProduct = productId ? getProductById(productId) : undefined;
+        // Fetch current product details by slug
+        const response = await fetch(`/api/product/getproductbyslug/${productId}`);
+        if (response.ok) {
+          const result = await response.json();
+          const p = result.data;
 
-        if (localProduct) {
-          setProduct(localProduct);
-          const related = getAllProducts()
-            .filter(p => p.categorySlug === localProduct.categorySlug && p.id !== localProduct.id)
-            .slice(0, 3);
-          setRelatedProducts(related);
-        } else if (productId) {
-          // Try backend
-          const response = await fetch(`/api/product/getproductbyid/${productId}`);
-          if (response.ok) {
-            const result = await response.json();
-            const p = result.data;
-            if (p) {
-              const mappedProduct = {
-                id: p._id,
-                name: p.name,
-                category: p.category_name || "Biologicals",
-                categorySlug: (p.category_name || "biologicals").toLowerCase().replace(/\s+/g, '-'),
-                description: p.description,
-                features: [],
-                applications: [],
-                image: "/placeholder.svg"
-              };
-              setProduct(mappedProduct);
+          if (p) {
+            setProduct(p);
 
-              // Try to fetch related from backend too
-              const relRes = await fetch(`/api/product/getallproduct`);
-              if (relRes.ok) {
-                const relData = await relRes.json();
-                const allBackProds = relData.data || [];
-                const relatedBack = allBackProds
-                  .filter((rp: any) => rp.category === p.category && rp._id !== p._id)
-                  .map((rp: any) => ({
-                    id: rp._id,
-                    name: rp.name,
-                    description: rp.description,
-                    image: "/placeholder.svg"
-                  }))
-                  .slice(0, 3);
-                setRelatedProducts(relatedBack);
-              }
+            // Now fetch related products (same category)
+            const relRes = await fetch(`/api/product/get-related-products/${productId}`);
+            if (relRes.ok) {
+              const relData = await relRes.json();
+              setRelatedProducts(relData.data || []);
             }
           }
         }
       } catch (error) {
-        console.error("Error finding product:", error);
+        console.error("Error fetching product details:", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    findProduct();
+    fetchProductData();
+    window.scrollTo(0, 0);
   }, [productId]);
 
   if (isLoading) {

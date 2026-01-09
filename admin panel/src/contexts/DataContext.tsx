@@ -9,13 +9,16 @@ interface DataContextType {
   addCategory: (category: Omit<Category, 'id' | 'created_at'>) => Promise<boolean>;
   updateCategory: (id: string, category: Omit<Category, 'id'>) => Promise<boolean>;
   deleteCategory: (id: string) => Promise<boolean>;
-  addProduct: (product: FormData) => Promise<boolean>;
+  uploadImages: (files: File[]) => Promise<string[]>;
+  addProduct: (product: any) => Promise<boolean>;
   updateProduct: (id: string, product: Omit<Product, 'id' | 'created_at'>) => Promise<boolean>;
   deleteProduct: (id: string) => Promise<boolean>;
   addUser: (user: Omit<User, 'id' | 'createdAt'>) => void;
   updateUser: (id: string, user: Omit<User, 'id' | 'createdAt'>) => void;
   deleteUser: (id: string) => void;
   fetchInquiries: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -89,7 +92,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Normalize ID (handle both id and _id from backend)
         const normalizedProducts = fetchedProducts.map(prod => ({
           ...prod,
-          id: prod.id || (prod as any)._id?.toString() || Math.random().toString()
+          id: prod.id || (prod as any)._id?.toString() || Math.random().toString(),
+          // Use product_image from backend, fallback if it was somehow missing
+          product_image: prod.product_image || (prod as any).image
         }));
 
         setProducts(normalizedProducts);
@@ -124,10 +129,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshData = async () => {
+    setIsLoading(true);
+    await Promise.all([
+      fetchCategories(),
+      fetchProducts(),
+      fetchInquiries()
+    ]);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    fetchCategories();
-    fetchProducts();
-    fetchInquiries();
+    refreshData();
   }, []);
 
   const addCategory = async (category: Omit<Category, 'id' | 'created_at'>) => {
@@ -197,15 +210,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const addProduct = async (product: FormData) => {
+  const uploadImages = async (files: File[]): Promise<string[]> => {
+    const token = localStorage.getItem('authToken');
+    const data = new FormData();
+    files.forEach(file => data.append('files', file));
+
+    try {
+      const response = await fetch('/api/product/upload-images', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: data,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        return result.image_urls;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      return [];
+    }
+  };
+
+  const addProduct = async (productData: any) => {
     const token = localStorage.getItem('authToken');
     try {
       const response = await fetch('/api/product/addproduct', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: product,
+        body: JSON.stringify(productData),
       });
 
       if (response.ok) {
@@ -220,13 +259,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProduct = async (id: string, product: Omit<Product, 'id' | 'created_at'>) => {
-    setProducts(prev => prev.map(p => p.id === id ? { ...p, ...product } : p));
-    return true;
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`/api/product/updateproduct/${id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(product),
+      });
+
+      if (response.ok) {
+        await fetchProducts();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return false;
+    }
   };
 
   const deleteProduct = async (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-    return true;
+    const token = localStorage.getItem('authToken');
+    try {
+      const response = await fetch(`/api/product/deleteproduct/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        await fetchProducts();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      return false;
+    }
   };
 
   const addUser = (user: Omit<User, 'id' | 'createdAt'>) => {
@@ -250,9 +323,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     <DataContext.Provider value={{
       categories, products, users, inquiries,
       addCategory, updateCategory, deleteCategory,
-      addProduct, updateProduct, deleteProduct,
+      uploadImages, addProduct, updateProduct, deleteProduct,
       addUser, updateUser, deleteUser,
-      fetchInquiries
+      fetchInquiries, refreshData,
+      isLoading
     }}>
       {children}
     </DataContext.Provider>

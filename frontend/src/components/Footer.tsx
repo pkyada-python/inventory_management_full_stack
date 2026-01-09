@@ -1,23 +1,33 @@
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Leaf, Phone, Mail, MapPin, Youtube } from "lucide-react";
 
-const productLinks = [
-  "Flowering Stimulant",
-  "Plant Growth Regulator",
-  "Bio Pesticides",
-  "Organic Fertilizers",
-  "Soil Conditioners",
-  "Bio Fungicides",
-];
-
 const quickLinks = [
-  { label: "Home", href: "#home" },
-  { label: "About Us", href: "#about" },
-  { label: "Products", href: "#products" },
+  { label: "Home", href: "/#home" },
+  { label: "About Us", href: "/#about" },
+  { label: "Products", href: "/#products" },
   { label: "Awards", href: "#" },
-  { label: "Contact", href: "#contact" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export const Footer = () => {
+  const [dynamicProducts, setDynamicProducts] = useState<{ id: string, name: string }[]>([]);
+
+  useEffect(() => {
+    const fetchRandomProducts = async () => {
+      try {
+        const response = await fetch('/api/product/get-random-products?limit=6');
+        if (response.ok) {
+          const result = await response.json();
+          setDynamicProducts(result.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching random products for footer:", error);
+      }
+    };
+    fetchRandomProducts();
+  }, []);
+
   return (
     <footer className="bg-primary text-primary-foreground">
       {/* Main Footer */}
@@ -57,16 +67,19 @@ export const Footer = () => {
           <div>
             <h4 className="font-serif text-lg font-bold mb-5">Our Products</h4>
             <ul className="space-y-3">
-              {productLinks.map((link) => (
-                <li key={link}>
-                  <a
-                    href="#products"
-                    className="text-primary-foreground/70 hover:text-secondary transition-colors"
+              {dynamicProducts.map((product) => (
+                <li key={product.id}>
+                  <Link
+                    to={`/product/${product.id}`}
+                    className="text-primary-foreground/70 hover:text-secondary transition-colors line-clamp-1"
                   >
-                    {link}
-                  </a>
+                    {product.name}
+                  </Link>
                 </li>
               ))}
+              {dynamicProducts.length === 0 && (
+                <li className="text-primary-foreground/50 text-sm italic">Loading products...</li>
+              )}
             </ul>
           </div>
 

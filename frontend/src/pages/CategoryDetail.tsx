@@ -15,18 +15,19 @@ const CategoryDetail = () => {
         const fetchCategoryProducts = async () => {
             setIsLoading(true);
             try {
-                // We can use the grouped API and find the matching slug
-                const response = await fetch('/api/product/get_all_category_all_product');
+                // Use the standardized hyphenated URL
+                const response = await fetch('/api/product/get-all-category-all-product');
                 if (response.ok) {
                     const result = await response.json();
                     const allCategories = result.data || [];
 
-                    // Find the category that matches the slug
+                    // The API now returns slugs directly, making lookup easy
                     const foundCategory = allCategories.find((cat: any) =>
-                        cat.category_name.toLowerCase().replace(/\s+/g, '-') === categorySlug
+                        cat.slug === categorySlug
                     );
 
                     if (foundCategory) {
+                        // console.log(foundCategory);
                         setCategoryData(foundCategory);
                     }
                 }
@@ -92,11 +93,11 @@ const CategoryDetail = () => {
                             <span className="text-sm font-semibold uppercase tracking-wider">Agro Products</span>
                         </div>
                         <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-6">
-                            {categoryData.category_name}
+                            {categoryData.name}
                         </h1>
-                        {categoryData.category_description && (
+                        {categoryData.description && (
                             <p className="text-lg text-muted-foreground leading-relaxed italic">
-                                {categoryData.category_description}
+                                {categoryData.description}
                             </p>
                         )}
                     </motion.div>
@@ -120,14 +121,14 @@ const CategoryDetail = () => {
                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                             {categoryData.products.map((product: any, index: number) => (
                                 <motion.div
-                                    key={product._id}
+                                    key={product.id}
                                     initial={{ opacity: 0, y: 20 }}
                                     whileInView={{ opacity: 1, y: 0 }}
                                     viewport={{ once: true }}
                                     transition={{ duration: 0.4, delay: index * 0.1 }}
                                 >
                                     <Link
-                                        to={`/product/${product._id}`}
+                                        to={`/product/${product.id}`}
                                         className="group block bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/30 transition-all duration-500"
                                     >
                                         <div className="aspect-square bg-muted relative overflow-hidden">
@@ -168,7 +169,7 @@ const CategoryDetail = () => {
             <section className="pb-24">
                 <div className="container-wide mx-auto px-4 text-center">
                     <Link to="/#products">
-                        <Button variant="ghost" size="lg" className="hover:bg-primary/5">
+                        <Button variant="ghost" size="lg" className="hover:bg-primary/5 hover:text-inherit">
                             <ArrowLeft className="w-4 h-4 mr-2" />
                             Back to All Agro Products
                         </Button>

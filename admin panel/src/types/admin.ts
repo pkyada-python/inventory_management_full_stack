@@ -13,10 +13,16 @@ export interface Product {
   name: string;
   category: string;
   category_name?: string;
+  categorySlug?: string;
   description: string;
   product_type: ProductType;
   product_images?: string[];
   product_image?: string;
+  features?: string[];
+  applications?: string[];
+  dosage?: string;
+  composition?: string;
+  packing?: string[];
   created_at: string;
 }
 

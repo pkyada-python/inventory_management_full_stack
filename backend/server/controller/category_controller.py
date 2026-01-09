@@ -18,11 +18,6 @@ class CategoryController:
                     data["name"].lower().strip().replace(" ", "-")
                 )
 
-                if not data["description"]:
-                    raise HTTPException(
-                        status_code=400, detail="Category description is required"
-                    )
-
                 if category_collection.find_one({"name": data["name"]}):
                     raise HTTPException(
                         status_code=400, detail="Category already exists"
@@ -34,6 +29,7 @@ class CategoryController:
                     "id": str(result.inserted_id),
                     "name": data["name"],
                     "category_name_slug": data["category_name_slug"],
+                    "icon": data.get("icon"),
                     "description": data["description"],
                     "created_at": data["created_at"],
                 }

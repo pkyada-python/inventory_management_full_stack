@@ -1,27 +1,37 @@
 import { useState, useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Phone, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { label: "Home", href: "#home" },
-  { label: "About", href: "#about" },
-  { label: "Products", href: "#products" },
-  { label: "Features", href: "#features" },
-  { label: "Contact", href: "#contact" },
+  { label: "Home", href: "/#home" },
+  { label: "About", href: "/#about" },
+  { label: "Products", href: "/#products" },
+  { label: "Features", href: "/#features" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener("scroll", handleScroll);
+
+    if (isHome) {
+      window.addEventListener("scroll", handleScroll);
+      handleScroll(); // Check initial state
+    } else {
+      setIsScrolled(true);
+    }
+
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHome]);
 
   return (
     <motion.header
@@ -36,23 +46,27 @@ export const Header = () => {
       <div className="container-wide mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <motion.a
-            href="#home"
+          <Link
+            to="/"
             className="flex items-center gap-3 group"
-            whileHover={{ scale: 1.02 }}
           >
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
-              <Leaf className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div className="flex flex-col">
-              <span className={`font-serif text-xl font-bold ${isScrolled ? 'text-primary' : 'text-primary-foreground'}`}>
-                Redox Industries
-              </span>
-              <span className={`text-xs ${isScrolled ? 'text-muted-foreground' : 'text-primary-foreground/80'}`}>
-                Limited
-              </span>
-            </div>
-          </motion.a>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center gap-3"
+            >
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg">
+                <Leaf className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div className="flex flex-col">
+                <span className={`font-serif text-xl font-bold transition-colors duration-300 ${isScrolled ? 'text-primary' : 'text-primary-foreground'}`}>
+                  Redox Industries
+                </span>
+                <span className={`text-xs transition-colors duration-300 ${isScrolled ? 'text-muted-foreground' : 'text-primary-foreground/80'}`}>
+                  Limited
+                </span>
+              </div>
+            </motion.div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-1">

@@ -71,18 +71,15 @@ class InquiryController:
     async def get_all_inquiry():
         try:
             data = list(inquiry_collection.find())
-            if data:
-                dataa = []
-                for doc in data:
-                    doc["_id"] = str(doc["_id"])
-                    dataa.append(doc)
-                return {
-                    "status_code": 200,
-                    "message": "Inquiries fetched successfully",
-                    "data": dataa,
-                }
-            else:
-                raise HTTPException(status_code=404, detail="No inquiries found")
+            dataa = []
+            for doc in data:
+                doc["_id"] = str(doc["_id"])
+                dataa.append(doc)
+            return {
+                "status_code": 200,
+                "message": "Inquiries fetched successfully",
+                "data": dataa,
+            }
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 

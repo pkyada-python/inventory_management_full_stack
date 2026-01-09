@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -8,21 +9,36 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, ImagePlus, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, ImagePlus, X, Eye } from 'lucide-react';
 import { Product, ProductType } from '@/types/admin';
 
 export default function Products() {
-  const { products, categories, addProduct, updateProduct, deleteProduct } = useData();
+  const { products, categories, addProduct, updateProduct, deleteProduct, uploadImages } = useData();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    if (location.state && (location.state as any).editProduct) {
+      handleEdit((location.state as any).editProduct);
+      // Clear state so it doesn't re-open on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
     description: '',
-    product_type: 'Powder' as ProductType
+    product_type: 'Powder' as ProductType,
+    features: '',
+    applications: '',
+    dosage: '',
+    composition: '',
+    packing: ''
   });
-
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,25 +50,70 @@ export default function Products() {
     try {
       let success = false;
       if (editingProduct) {
-        success = await updateProduct(editingProduct.id, formData);
-      } else {
-        const data = new FormData();
-        data.append('name', formData.name);
-        data.append('category', formData.category);
-        data.append('description', formData.description);
-        data.append('product_type', formData.product_type);
+        // 1. Upload new images if any
+        let newImageUrls: string[] = [];
+        if (selectedFiles.length > 0) {
+          newImageUrls = await uploadImages(selectedFiles);
+          if (newImageUrls.length === 0) {
+            setError('Failed to upload new images.');
+            setIsLoading(false);
+            return;
+          }
+        }
 
+        // 2. Filter out deleted images and add new ones
+        const finalImages = [
+          ...existingImages.filter(img => !imagesToDelete.includes(img)),
+          ...newImageUrls
+        ];
+
+        if (finalImages.length === 0) {
+          setError('At least one image is required.');
+          setIsLoading(false);
+          return;
+        }
+
+        // 3. Prepare Update Payload
+        const updatedProductData: any = {
+          ...formData,
+          features: formData.features.split(',').map(s => s.trim()).filter(s => s),
+          applications: formData.applications.split(',').map(s => s.trim()).filter(s => s),
+          packing: formData.packing.split(',').map(s => s.trim()).filter(s => s),
+          product_images: finalImages
+        };
+        success = await updateProduct(editingProduct.id, updatedProductData);
+      } else {
+        // 1. Check if images are selected
         if (selectedFiles.length === 0) {
           setError('At least one image is required.');
           setIsLoading(false);
           return;
         }
 
-        selectedFiles.forEach(file => {
-          data.append('files', file);
-        });
+        // 2. Upload images first to get Cloudinary URLs
+        const imageUrls = await uploadImages(selectedFiles);
+        if (imageUrls.length === 0) {
+          setError('Failed to upload images. Please try again.');
+          setIsLoading(false);
+          return;
+        }
 
-        success = await addProduct(data);
+        // 3. Prepare JSON payload
+        const productJson = {
+          name: formData.name,
+          category: formData.category,
+          description: formData.description,
+          product_type: formData.product_type,
+          dosage: formData.dosage,
+          composition: formData.composition,
+          product_images: imageUrls,
+          features: formData.features.split(',').map(s => s.trim()).filter(s => s),
+          applications: formData.applications.split(',').map(s => s.trim()).filter(s => s),
+          packing: formData.packing.split(',').map(s => s.trim()).filter(s => s)
+        };
+
+        // 4. Send as JSON
+        success = await addProduct(productJson);
       }
 
 
@@ -74,8 +135,15 @@ export default function Products() {
       name: product.name,
       category: product.category,
       description: product.description,
-      product_type: product.product_type
+      product_type: product.product_type,
+      features: (product.features || []).join(', '),
+      applications: (product.applications || []).join(', '),
+      dosage: product.dosage || '',
+      composition: product.composition || '',
+      packing: (product.packing || []).join(', ')
     });
+    setExistingImages(product.product_images || []);
+    setImagesToDelete([]);
     setIsOpen(true);
   };
 
@@ -93,9 +161,16 @@ export default function Products() {
       name: '',
       category: '',
       description: '',
-      product_type: 'Powder'
+      product_type: 'Powder',
+      features: '',
+      applications: '',
+      dosage: '',
+      composition: '',
+      packing: ''
     });
     setSelectedFiles([]);
+    setExistingImages([]);
+    setImagesToDelete([]);
     setError(null);
   };
 
@@ -123,7 +198,7 @@ export default function Products() {
                 <Plus className="h-4 w-4 mr-2" /> Add Product
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>{editingProduct ? 'Edit Product' : 'Add Product'}</DialogTitle>
               </DialogHeader>
@@ -192,7 +267,63 @@ export default function Products() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Enter product description"
-                    rows={3}
+                    rows={2}
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dosage">Dosage</Label>
+                    <Input
+                      id="dosage"
+                      value={formData.dosage}
+                      onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
+                      placeholder="e.g. 1-2 ml per liter"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="composition">Composition</Label>
+                    <Input
+                      id="composition"
+                      value={formData.composition}
+                      onChange={(e) => setFormData({ ...formData, composition: e.target.value })}
+                      placeholder="e.g. Nitrobenzene 20%"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="features">Features (comma separated)</Label>
+                  <Input
+                    id="features"
+                    value={formData.features}
+                    onChange={(e) => setFormData({ ...formData, features: e.target.value })}
+                    placeholder="Feature 1, Feature 2"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="applications">Applications (comma separated)</Label>
+                  <Input
+                    id="applications"
+                    value={formData.applications}
+                    onChange={(e) => setFormData({ ...formData, applications: e.target.value })}
+                    placeholder="Cotton, Vegetables"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="packing">Packing (comma separated)</Label>
+                  <Input
+                    id="packing"
+                    value={formData.packing}
+                    onChange={(e) => setFormData({ ...formData, packing: e.target.value })}
+                    placeholder="100ml, 250ml"
                     disabled={isLoading}
                   />
                 </div>
@@ -200,8 +331,27 @@ export default function Products() {
                 <div className="space-y-2">
                   <Label htmlFor="images">Product Images (At least one required)</Label>
                   <div className="grid grid-cols-4 gap-2 mb-2">
+                    {/* Existing Images */}
+                    {existingImages.filter(img => !imagesToDelete.includes(img)).map((img, idx) => (
+                      <div key={`existing-${idx}`} className="relative aspect-square rounded-md overflow-hidden bg-muted border">
+                        <img
+                          src={img}
+                          alt="existing"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setImagesToDelete(prev => [...prev, img])}
+                          className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* New Files Preview */}
                     {selectedFiles.map((file, idx) => (
-                      <div key={idx} className="relative aspect-square rounded-md overflow-hidden bg-muted border">
+                      <div key={`new-${idx}`} className="relative aspect-square rounded-md overflow-hidden bg-muted border-2 border-primary/30">
                         <img
                           src={URL.createObjectURL(file)}
                           alt="preview"
@@ -214,6 +364,7 @@ export default function Products() {
                         >
                           <X className="h-3 w-3" />
                         </button>
+                        <div className="absolute bottom-0 left-0 right-0 bg-primary/80 text-[8px] text-white text-center py-0.5 font-bold uppercase">New</div>
                       </div>
                     ))}
                     <label className="flex flex-col items-center justify-center aspect-square rounded-md border border-dashed border-primary/50 bg-primary/5 hover:bg-primary/10 cursor-pointer transition-colors">
@@ -302,6 +453,11 @@ export default function Products() {
                     </TableCell>
                     <TableCell>
                       <div className="flex justify-center gap-1">
+                        <Link to={`/admin/products/${product.id}`}>
+                          <Button size="icon" variant="ghost" title="View Details">
+                            <Eye className="h-4 w-4 text-primary" />
+                          </Button>
+                        </Link>
                         <Button size="icon" variant="ghost" onClick={() => handleEdit(product)} title="Edit">
                           <Pencil className="h-4 w-4 text-slate-600" />
                         </Button>

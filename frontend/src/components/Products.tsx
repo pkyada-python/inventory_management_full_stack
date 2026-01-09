@@ -21,30 +21,12 @@ export const Products = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/product/get_all_category_all_product');
+        const response = await fetch('/api/product/get-all-category-all-product');
 
         if (response.ok) {
           const result = await response.json();
-          const groupedData = result.data || [];
-
-          const mappedCategories = groupedData.map((group: any) => ({
-            name: group.category_name,
-            slug: group.category_name.toLowerCase().replace(/\s+/g, '-'),
-            icon: "Leaf", // Default icon
-            description: group.category_description || "",
-            products: group.products.map((p: any) => ({
-              id: p._id,
-              name: p.name,
-              category: group.category_name,
-              categorySlug: group.category_name.toLowerCase().replace(/\s+/g, '-'),
-              description: p.description,
-              features: [],
-              applications: [],
-              image: "/placeholder.svg"
-            }))
-          }));
-
-          setCategories(mappedCategories);
+          // The API now returns the data in the exact format we need
+          setCategories(result.data || []);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -89,54 +71,64 @@ export const Products = () => {
             <p className="text-muted-foreground animate-pulse">Loading premium catalog...</p>
           </div>
         ) : categories.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {categories.map((category, index) => {
-              const IconComponent = iconMap[category.icon] || Leaf;
-              return (
-                <motion.div
-                  key={category.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <Link
-                    to={`/category/${category.slug}`}
-                    className="group relative block h-full bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/40 transition-all duration-500"
+          <div className="space-y-12">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {categories.slice(0, 6).map((category, index) => {
+                const IconComponent = iconMap[category.icon] || Leaf;
+                return (
+                  <motion.div
+                    key={category.name}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
                   >
-                    {/* Visual Decor */}
-                    <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
-                      <IconComponent className="w-32 h-32" />
-                    </div>
+                    <Link
+                      to={`/category/${category.slug}`}
+                      className="group relative block h-full bg-card rounded-2xl border border-border/50 overflow-hidden hover:shadow-lifted hover:border-primary/40 transition-all duration-500"
+                    >
+                      {/* Visual Decor */}
+                      <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
+                        <IconComponent className="w-32 h-32" />
+                      </div>
 
-                    <div className="p-8 flex flex-col h-full">
-                      <div className="flex items-start justify-between mb-8">
-                        <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 shadow-inner">
-                          <IconComponent className="w-8 h-8" />
+                      <div className="p-8 flex flex-col h-full">
+                        <div className="flex items-start justify-between mb-8">
+                          <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 shadow-inner">
+                            <IconComponent className="w-8 h-8" />
+                          </div>
+                          <span className="text-sm font-bold text-secondary bg-secondary/5 px-3 py-1 rounded-full border border-secondary/10">
+                            {category.products.length} Products
+                          </span>
                         </div>
-                        <span className="text-sm font-bold text-secondary bg-secondary/5 px-3 py-1 rounded-full border border-secondary/10">
-                          {category.products.length} Products
-                        </span>
-                      </div>
 
-                      <div className="flex-1">
-                        <h3 className="font-serif text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
-                          {category.name}
-                        </h3>
-                        {/* <p className="text-muted-foreground leading-relaxed line-clamp-3 mb-6">
-                          Explore our premium range of {category.name.toLowerCase()} designed for sustainable and high-yield farming.
-                        </p> */}
-                      </div>
+                        <div className="flex-1">
+                          <h3 className="font-serif text-2xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors duration-300">
+                            {category.name}
+                          </h3>
+                        </div>
 
-                      <div className="inline-flex items-center gap-2 text-primary font-bold text-sm tracking-wide uppercase group-hover:gap-3 transition-all duration-300">
-                        View Category
-                        <ArrowRight className="w-4 h-4" />
+                        <div className="inline-flex items-center gap-2 text-primary font-bold text-sm tracking-wide uppercase group-hover:gap-3 transition-all duration-300">
+                          View Category
+                          <ArrowRight className="w-4 h-4" />
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              );
-            })}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            {categories.length > 6 && (
+              <div className="text-center">
+                <Link to="/categories">
+                  <Button variant="outline" size="lg" className="rounded-full px-8 hover:bg-primary hover:text-white transition-all">
+                    View All Categories
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-20 bg-muted/20 rounded-3xl border border-dashed border-border/50">

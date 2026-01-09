@@ -7,6 +7,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,14 +15,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('adminUser');
     const storedToken = localStorage.getItem('authToken');
     if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      setToken(storedToken);
+      try {
+        setUser(JSON.parse(storedUser));
+        setToken(storedToken);
+      } catch (e) {
+        console.error('Failed to parse stored user', e);
+      }
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string): Promise<{ success: boolean; message?: string }> => {
@@ -37,12 +44,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (response.ok) {
-        // Assuming the response structure based on common practices
-        // If data.token exists, we store it
         const userToken = data.token || data.access_token;
-        const adminUser = { 
-          email: username, // Using username as email if not provided
-          name: data.name || username 
+        const adminUser = {
+          email: username,
+          name: data.name || username
         };
 
         setUser(adminUser);
@@ -69,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user }}>
-      {children}
+    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!user, isLoading }}>
+      {!isLoading && children}
     </AuthContext.Provider>
   );
 }
