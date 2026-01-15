@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,24 @@ export const ProductInquiryModal = ({
         quantity: "1",
         message: `I'm interested in ${productName}. Please provide more information.`,
     });
+    const [adminWhatsAppNumber, setAdminWhatsAppNumber] = useState("917487853898");
+
+    useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const response = await fetch("/api/config/config");
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.admin_whatsapp_number) {
+                        setAdminWhatsAppNumber(data.admin_whatsapp_number);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching config:", error);
+            }
+        };
+        fetchConfig();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -108,7 +126,7 @@ export const ProductInquiryModal = ({
                                         const message = encodeURIComponent(
                                             `Hello Admin,\n\nI am *${formData.name}*.\nI just submitted an inquiry for *${productName}*.\n\n*Details:*\n📦 Product: ${productName}\n🔢 Quantity: ${formData.quantity}\n💬 Message: ${formData.message}\n\nI'd like to discuss further. Admin will reply me.`
                                         );
-                                        window.open(`https://wa.me/917487853898?text=${message}`, '_blank');
+                                        window.open(`https://wa.me/${adminWhatsAppNumber}?text=${message}`, '_blank');
                                     }}
                                 >
                                     <MessageSquare className="w-4 h-4 mr-2" />
