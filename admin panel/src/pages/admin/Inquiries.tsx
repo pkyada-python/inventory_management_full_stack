@@ -2,6 +2,7 @@ import { AdminLayout } from '@/components/admin/AdminLayout';
 import { useData } from '@/contexts/DataContext';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Mail, Phone, ShoppingCart, MessageSquare, Calendar } from 'lucide-react';
 
 export default function InquiriesPage() {
@@ -74,11 +75,26 @@ export default function InquiriesPage() {
                                                 {inquiry.created_at ? new Date(inquiry.created_at).toLocaleDateString() : 'N/A'}
                                             </div>
                                         </TableCell>
+                                        <TableCell>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white"
+                                                onClick={() => {
+                                                    const text = encodeURIComponent(`Hello ${inquiry.name}, I am replying to your inquiry for ${inquiry.product}.`);
+                                                    const phone = inquiry.phone.startsWith('91') ? inquiry.phone : `91${inquiry.phone}`;
+                                                    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+                                                }}
+                                            >
+                                                <MessageSquare className="h-4 w-4 mr-1" />
+                                                Reply
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground text-lg">
+                                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground text-lg">
                                         No inquiries found.
                                     </TableCell>
                                 </TableRow>
