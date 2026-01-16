@@ -9,6 +9,7 @@ class CategoryController:
     async def create_category(category: Category):
         try:
             data = category.model_dump()
+            print(data["name"])
             if data:
                 if not data["name"]:
                     raise HTTPException(

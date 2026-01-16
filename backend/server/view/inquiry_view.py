@@ -17,6 +17,11 @@ class InquiryView:
     async def get_all_inquiry():
         return await InquiryController.get_all_inquiry()
 
+    @staticmethod
+    @router.get("/get-admin-whatsapp")
+    async def get_admin_whatsapp():
+        return await InquiryController.get_admin_whatsapp()
+
     # @staticmethod
     # @router.get("/getinquiry/{id}", response_model=inquiry)
     # async def get_inquiry_by_id(id: str):

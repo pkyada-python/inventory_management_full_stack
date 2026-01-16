@@ -83,6 +83,13 @@ class InquiryController:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
+    @staticmethod
+    async def get_admin_whatsapp():
+        import os
+
+        admin_number = os.getenv("ADMIN_WHATSAPP_NUMBER", "917487853898")
+        return {"whatsapp_number": admin_number}
+
     # @staticmethod
     # async def get_inquiry_by_id(id: str):
 
