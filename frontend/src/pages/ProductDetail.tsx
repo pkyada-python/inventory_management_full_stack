@@ -34,6 +34,7 @@ const ProductDetail = () => {
             const relRes = await fetch(`/api/product/get-related-products/${productId}`);
             if (relRes.ok) {
               const relData = await relRes.json();
+              console.log(relData);
               setRelatedProducts(relData.data || []);
             }
           }
@@ -116,7 +117,7 @@ const ProductDetail = () => {
             >
               <div className="aspect-square bg-gradient-to-br from-primary/10 to-secondary/10 rounded-3xl overflow-hidden border border-border/50">
                 <img
-                  src={product.image}
+                  src={product.product_image}
                   alt={product.name}
                   className="w-full h-full object-cover"
                 />
@@ -313,7 +314,7 @@ const ProductDetail = () => {
                   >
                     <div className="aspect-video bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
                       <img
-                        src={relatedProduct.image}
+                        src={relatedProduct.product_image}
                         alt={relatedProduct.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

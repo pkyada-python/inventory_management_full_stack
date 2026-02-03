@@ -14,7 +14,7 @@ class ProductController:
             # Ensure we don't store the placeholder in the database
             if "product_images" in data and isinstance(data["product_images"], list):
                 data["product_images"] = [
-                    img for img in data["product_images"] if img != "/placeholder.svg"
+                    img for img in data["product_images"]
                 ]
 
             print(data)
@@ -274,13 +274,14 @@ class ProductController:
             # Use aggregation to get random samples from MongoDB
             pipeline = [{"$sample": {"size": limit}}]
             random_products = list(product_collection.aggregate(pipeline))
-
+            # print(random_products)
             formatted_products = []
             for p in random_products:
                 formatted_products.append(
                     {
                         "id": p.get("product_name_slug") or str(p["_id"]),
                         "name": p.get("name"),
+                            "product_image": p.get("product_images")[0],
                     }
                 )
 
